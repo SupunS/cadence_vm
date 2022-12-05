@@ -81,6 +81,8 @@ impl Clone for BoolValue {
     }
 }
 
+impl Copy for BoolValue {}
+
 pub(crate) const TRUE_VALUE: BoolValue = BoolValue { value: true };
 
 pub(crate) const FALSE_VALUE: BoolValue = BoolValue { value: false };
@@ -101,3 +103,5 @@ impl<'a> Clone for FunctionValue<'a> {
         }
     }
 }
+
+impl<'a> Copy for FunctionValue<'a> {}

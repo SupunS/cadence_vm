@@ -74,8 +74,8 @@ fn test_vm() {
             }),
             // fib(n - 2)
             Box::new(IntConstantLoad {
-                index: 0,
-                target: 1,
+                index: 2,
+                target: 5,
             }),
             Box::new(IntSubtract {
                 left_operand: 0,
@@ -108,15 +108,15 @@ fn test_vm() {
         constants: vec![
             IntValue { value: 2 },
             IntValue { value: 1 },
-            IntValue { value: 1 },
+            IntValue { value: 2 },
         ],
         call_stack: vec![],
         globals: vec![FunctionValue { function: &func }],
         current_index: 0,
+        return_value: IntValue { value: 0 },
     };
 
     let result = vm.invoke(&func, IntValue { value: 7 });
 
     assert_eq!(result.value, 13);
-    println!("************** {}", result.value);
 }

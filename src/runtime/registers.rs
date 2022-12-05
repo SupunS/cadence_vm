@@ -17,9 +17,9 @@
  */
 
 pub struct RegisterCounts {
-    pub(crate) ints: usize,
-    pub(crate) bools: usize,
-    pub(crate) funcs: usize,
+    pub ints: usize,
+    pub bools: usize,
+    pub funcs: usize,
 }
 
 impl RegisterCounts {

@@ -19,6 +19,6 @@
 use crate::runtime::{opcodes, registers};
 
 pub struct Function {
-    pub(crate) code: Vec<Box<dyn opcodes::OpCode>>,
-    pub(crate) local_count: registers::RegisterCounts,
+    pub code: Vec<Box<dyn opcodes::OpCode>>,
+    pub local_count: registers::RegisterCounts,
 }
