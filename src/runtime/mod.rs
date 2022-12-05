@@ -21,4 +21,3 @@ pub mod opcodes;
 pub mod values;
 pub mod vm;
 pub mod registers;
-mod test_vm;

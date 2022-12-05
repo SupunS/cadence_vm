@@ -213,7 +213,7 @@ pub struct IntMove {
 impl OpCode for IntMove {
     fn execute(&self, vm: &mut vm::VM) {
         let int_reg = &mut vm.call_frame().locals.ints;
-        int_reg[self.to] = int_reg[self.from].clone();
+        int_reg[self.to] = int_reg[self.from];
     }
 }
 
@@ -224,9 +224,7 @@ pub struct GlobalFuncLoad {
 
 impl OpCode for GlobalFuncLoad {
     fn execute(&self, vm: &mut vm::VM) {
-        // TODO: Can do this without cloning?
-        //  Borrow checker complains when try to get a reference instead of copying.
-        let value = vm.globals[self.index].clone();
+        let value = vm.globals[self.index];
         vm.call_frame().locals.funcs[self.result] = Option::Some(value);
     }
 }

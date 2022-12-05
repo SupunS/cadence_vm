@@ -17,7 +17,7 @@
  */
 
 use crate::runtime::opcodes::Argument;
-use crate::runtime::values::{BoolValue, FunctionValue, IntValue, Value, FALSE_VALUE};
+use crate::runtime::values::{BoolValue, FunctionValue, IntValue, FALSE_VALUE, INT_ZERO_VALUE};
 use crate::runtime::{bbq, registers};
 
 use crate::runtime::bbq::Function;
@@ -39,7 +39,6 @@ pub struct CallFrame<'a> {
     function: &'a bbq::Function,
     pub(crate) ip: usize,
 
-    pub(crate) return_value_index: usize,
     return_to_index: usize,
 }
 
@@ -52,7 +51,7 @@ pub struct Registers<'a> {
 impl<'a> Registers<'a> {
     fn new(function: &'a Function) -> Self {
         Registers {
-            ints: vec![IntValue { value: 0 }; function.local_count.ints],
+            ints: vec![INT_ZERO_VALUE; function.local_count.ints],
             bools: vec![FALSE_VALUE; function.local_count.bools],
             funcs: vec![None; function.local_count.funcs],
         }
@@ -72,9 +71,6 @@ impl<'a> VM<'a> {
             function: function,
             ip: 0,
             return_to_index: 0,
-
-            // TODO:
-            return_value_index: 8,
         };
 
         self.call_stack.push(call_frame);
@@ -125,7 +121,6 @@ impl<'a> VM<'a> {
             locals: locals,
             function: function,
             ip: 0,
-            return_value_index: 0,
             return_to_index: result_index,
         };
 

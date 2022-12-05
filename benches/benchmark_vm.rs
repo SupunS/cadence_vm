@@ -18,15 +18,15 @@
 
 use cadence_vm::runtime::bbq::Function;
 use cadence_vm::runtime::opcodes::{
-    Argument, Call, GlobalFuncLoad, IntAdd, IntConstantLoad, IntLess, IntSubtract, JumpIfFalse,
-    ReturnValue,
+    Argument, Call, GlobalFuncLoad, IntAdd, IntConstantLoad, IntLess, IntMove, IntSubtract, Jump,
+    JumpIfFalse, ReturnValue,
 };
 use cadence_vm::runtime::registers;
 use cadence_vm::runtime::values::{FunctionValue, IntValue};
 use cadence_vm::runtime::vm::VM;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-fn cadence_fib_bench(c: &mut Criterion) {
+fn bench_cadence_recursive_fib(c: &mut Criterion) {
     let func = Function {
         local_count: registers::RegisterCounts {
             ints: 9,
@@ -118,12 +118,99 @@ fn cadence_fib_bench(c: &mut Criterion) {
 
     let n = IntValue { value: 7 };
 
-    c.bench_function("cadence fib 7", |b| {
+    c.bench_function("cadence recursive fib 7", |b| {
         b.iter(|| vm.invoke(&func, black_box(n)))
     });
 }
 
-fn rust_fib_bench(c: &mut Criterion) {
+fn bench_cadence_imperative_fib(c: &mut Criterion) {
+    let func = Function {
+        local_count: registers::RegisterCounts {
+            ints: 11,
+            bools: 1,
+            funcs: 0,
+        },
+        code: vec![
+            // var fib1 = 1
+            Box::new(IntConstantLoad {
+                index: 0,
+                target: 1,
+            }),
+            Box::new(IntMove { from: 1, to: 2 }),
+            // var fib1 = 1
+            Box::new(IntConstantLoad {
+                index: 1,
+                target: 3,
+            }),
+            Box::new(IntMove { from: 3, to: 4 }),
+            // var fibonacci = fib1
+            Box::new(IntMove { from: 2, to: 5 }),
+            // var i = 2
+            Box::new(IntConstantLoad {
+                index: 2,
+                target: 6,
+            }),
+            Box::new(IntMove { from: 6, to: 7 }),
+            // while i < n
+            Box::new(IntLess {
+                left_operand: 7,
+                right_operand: 0,
+                result: 0,
+            }),
+            Box::new(JumpIfFalse {
+                condition: 0,
+                target: 17,
+            }),
+            // fibonacci = fib1 + fib2
+            Box::new(IntAdd {
+                left_operand: 2,
+                right_operand: 4,
+                result: 8,
+            }),
+            Box::new(IntMove { from: 8, to: 5 }),
+            // fib1 = fib2
+            Box::new(IntMove { from: 4, to: 2 }),
+            // fib2 = fibonacci
+            Box::new(IntMove { from: 5, to: 4 }),
+            // i = i + 1
+            Box::new(IntConstantLoad {
+                index: 3,
+                target: 9,
+            }),
+            Box::new(IntAdd {
+                left_operand: 7,
+                right_operand: 9,
+                result: 10,
+            }),
+            Box::new(IntMove { from: 10, to: 7 }),
+            // continue loop
+            Box::new(Jump { target: 7 }),
+            // return fibonacci
+            Box::new(ReturnValue { index: 5 }),
+        ],
+    };
+
+    let mut vm = VM {
+        constants: vec![
+            IntValue { value: 1 },
+            IntValue { value: 1 },
+            IntValue { value: 2 },
+            IntValue { value: 1 },
+        ],
+        call_stack: vec![],
+        globals: vec![FunctionValue { function: &func }],
+        current_index: 0,
+        return_value: IntValue { value: 0 },
+    };
+
+    let n = IntValue { value: 7 };
+
+    c.bench_function("cadence imperative fib 7", |b| {
+        b.iter(|| vm.invoke(&func, black_box(n)))
+    });
+}
+
+fn bench_rust_fib(c: &mut Criterion) {
     c.bench_function("rust fib 7", |b| b.iter(|| fibonacci(black_box(7))));
 }
 
@@ -135,5 +222,11 @@ fn fibonacci(n: u32) -> u32 {
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-criterion_group!(benches, cadence_fib_bench, rust_fib_bench);
-criterion_main!(benches);
+criterion_group!(
+    benches,
+    bench_cadence_recursive_fib,
+    bench_cadence_imperative_fib,
+    bench_rust_fib,
+);
+
+criterion_main!(benches,);

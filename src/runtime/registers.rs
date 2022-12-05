@@ -49,5 +49,3 @@ pub enum RegisterType {
     Bool,
     Func,
 }
-
-pub(crate) struct LocalCount;

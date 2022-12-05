@@ -27,6 +27,8 @@ pub struct IntValue {
     pub value: isize,
 }
 
+pub(crate) const INT_ZERO_VALUE: IntValue = IntValue { value: 0 };
+
 impl Value for IntValue {}
 
 impl Clone for IntValue {

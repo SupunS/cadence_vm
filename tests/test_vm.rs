@@ -16,17 +16,17 @@
  * limitations under the License.
  */
 
-use crate::runtime::bbq::Function;
-use crate::runtime::opcodes::{
-    Argument, Call, GlobalFuncLoad, IntAdd, IntConstantLoad, IntLess, IntSubtract, JumpIfFalse,
-    ReturnValue,
+use cadence_vm::runtime::bbq::Function;
+use cadence_vm::runtime::opcodes::{
+    Argument, Call, GlobalFuncLoad, IntAdd, IntConstantLoad, IntLess, IntMove, IntSubtract, Jump,
+    JumpIfFalse, ReturnValue,
 };
-use crate::runtime::registers;
-use crate::runtime::values::{FunctionValue, IntValue};
-use crate::runtime::vm::VM;
+use cadence_vm::runtime::registers;
+use cadence_vm::runtime::values::{FunctionValue, IntValue};
+use cadence_vm::runtime::vm::VM;
 
 #[test]
-fn test_vm() {
+fn test_recursive_fib() {
     let func = Function {
         local_count: registers::RegisterCounts {
             ints: 9,
@@ -109,6 +109,92 @@ fn test_vm() {
             IntValue { value: 2 },
             IntValue { value: 1 },
             IntValue { value: 2 },
+        ],
+        call_stack: vec![],
+        globals: vec![FunctionValue { function: &func }],
+        current_index: 0,
+        return_value: IntValue { value: 0 },
+    };
+
+    let result = vm.invoke(&func, IntValue { value: 7 });
+
+    assert_eq!(result.value, 13);
+}
+
+#[test]
+fn test_imperative_fib() {
+    let func = Function {
+        local_count: registers::RegisterCounts {
+            ints: 11,
+            bools: 1,
+            funcs: 0,
+        },
+        code: vec![
+            // var fib1 = 1
+            Box::new(IntConstantLoad {
+                index: 0,
+                target: 1,
+            }),
+            Box::new(IntMove { from: 1, to: 2 }),
+            // var fib1 = 1
+            Box::new(IntConstantLoad {
+                index: 1,
+                target: 3,
+            }),
+            Box::new(IntMove { from: 3, to: 4 }),
+            // var fibonacci = fib1
+            Box::new(IntMove { from: 2, to: 5 }),
+            // var i = 2
+            Box::new(IntConstantLoad {
+                index: 2,
+                target: 6,
+            }),
+            Box::new(IntMove { from: 6, to: 7 }),
+            // while i < n
+            Box::new(IntLess {
+                left_operand: 7,
+                right_operand: 0,
+                result: 0,
+            }),
+            Box::new(JumpIfFalse {
+                condition: 0,
+                target: 17,
+            }),
+            // fibonacci = fib1 + fib2
+            Box::new(IntAdd {
+                left_operand: 2,
+                right_operand: 4,
+                result: 8,
+            }),
+            Box::new(IntMove { from: 8, to: 5 }),
+            // fib1 = fib2
+            Box::new(IntMove { from: 4, to: 2 }),
+            // fib2 = fibonacci
+            Box::new(IntMove { from: 5, to: 4 }),
+            // i = i + 1
+            Box::new(IntConstantLoad {
+                index: 3,
+                target: 9,
+            }),
+            Box::new(IntAdd {
+                left_operand: 7,
+                right_operand: 9,
+                result: 10,
+            }),
+            Box::new(IntMove { from: 10, to: 7 }),
+            // continue loop
+            Box::new(Jump { target: 7 }),
+            // return fibonacci
+            Box::new(ReturnValue { index: 5 }),
+        ],
+    };
+
+    let mut vm = VM {
+        constants: vec![
+            IntValue { value: 1 },
+            IntValue { value: 1 },
+            IntValue { value: 2 },
+            IntValue { value: 1 },
         ],
         call_stack: vec![],
         globals: vec![FunctionValue { function: &func }],
