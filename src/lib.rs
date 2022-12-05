@@ -17,5 +17,3 @@
  */
 
 pub mod runtime;
-
-fn main() {}
