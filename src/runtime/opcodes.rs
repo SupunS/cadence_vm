@@ -25,7 +25,9 @@ pub trait OpCode {
 pub struct Return {}
 
 impl OpCode for Return {
-    fn execute(&self, _: &mut vm::VM) {}
+    fn execute(&self, _: &mut vm::VM) {
+        panic!("not implemented!")
+    }
 }
 
 pub struct ReturnValue {
@@ -117,7 +119,9 @@ pub struct IntNotEqual {
 }
 
 impl OpCode for IntNotEqual {
-    fn execute(&self, _: &mut vm::VM) {}
+    fn execute(&self, _: &mut vm::VM) {
+        panic!("not implemented!")
+    }
 }
 
 pub struct IntLess {
@@ -161,7 +165,9 @@ pub struct IntLessOrEqual {
 }
 
 impl OpCode for IntLessOrEqual {
-    fn execute(&self, _: &mut vm::VM) {}
+    fn execute(&self, _: &mut vm::VM) {
+        panic!("not implemented!")
+    }
 }
 
 pub struct IntGreaterOrEqual {
@@ -171,7 +177,9 @@ pub struct IntGreaterOrEqual {
 }
 
 impl OpCode for IntGreaterOrEqual {
-    fn execute(&self, _: &mut vm::VM) {}
+    fn execute(&self, _: &mut vm::VM) {
+        panic!("not implemented!")
+    }
 }
 
 pub struct IntConstantLoad {
