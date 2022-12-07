@@ -1,0 +1,21 @@
+[package]
+name = "runtime"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+# If you only wanted dynamic library, you'd use only "cdylib".
+# If you only wanted static library, you'd use only "staticlib".
+# This demo shows both. See https://doc.rust-lang.org/reference/linkage.html
+# for more information.
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[dependencies]
+libc = "0.2.2"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "benchmark_vm"
+harness = false
