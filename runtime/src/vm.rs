@@ -16,31 +16,10 @@
  * limitations under the License.
  */
 
-use crate::opcodes::Argument;
-use crate::values::{BoolValue, FunctionValue, IntValue, FALSE_VALUE, INT_ZERO_VALUE};
-use crate::{bbq, registers};
-
 use crate::bbq::Function;
-use crate::registers::RegisterType;
-
-pub struct VM<'a> {
-    // Program   *bbq.Program
-    pub globals: Vec<FunctionValue<'a>>,
-    pub constants: Vec<IntValue>,
-    // functions map[string]*bbq.Function
-    pub call_stack: Vec<CallFrame<'a>>,
-    pub current_index: usize,
-
-    pub return_value: IntValue,
-}
-
-pub struct CallFrame<'a> {
-    pub(crate) locals: Registers<'a>,
-    function: &'a bbq::Function,
-    pub(crate) ip: usize,
-
-    return_to_index: usize,
-}
+use crate::opcodes::{Argument, OpCode};
+use crate::registers::{RegisterCounts, RegisterType};
+use crate::values::{BoolValue, FALSE_VALUE, FunctionValue, INT_ZERO_VALUE, IntValue, TRUE_VALUE};
 
 pub struct Registers<'a> {
     pub(crate) ints: Vec<IntValue>,
@@ -58,25 +37,47 @@ impl<'a> Registers<'a> {
     }
 }
 
+pub struct CallFrame<'a> {
+    pub(crate) locals: Registers<'a>,
+    function: &'a Function<'a>,
+    pub(crate) ip: usize,
+
+    return_to_index: usize,
+}
+
+impl<'a> CallFrame<'a> {
+    fn new(function: &'a Function, locals: Registers<'a>, return_to_index: usize) -> Self {
+        CallFrame {
+            function,
+            locals,
+            return_to_index,
+            ip: 0,
+        }
+    }
+}
+
+pub struct VM<'a> {
+    // Program   *bbq.Program
+    pub globals: Vec<FunctionValue<'a>>,
+    pub constants: Vec<IntValue>,
+    // functions map[string]*bbq.Function
+    pub call_stack: Vec<CallFrame<'a>>,
+    pub current_index: usize,
+
+    pub return_value: IntValue,
+}
+
 impl<'a> VM<'a> {
     pub fn invoke(&mut self, function: &'a Function, argument: IntValue) -> IntValue {
         // TODO: pass in the function name and look it up from the functions map.
 
         let mut locals = Registers::new(function);
-
         locals.ints[0] = argument;
 
-        let call_frame = CallFrame {
-            locals: locals,
-            function: function,
-            ip: 0,
-            return_to_index: 0,
-        };
-
+        let call_frame = CallFrame::new(function, locals, 0);
         self.call_stack.push(call_frame);
 
         self.run();
-
         return self.return_value;
     }
 
@@ -99,7 +100,25 @@ impl<'a> VM<'a> {
             }
 
             call_frame.ip += 1;
-            call_frame.function.code[ip].execute(self);
+            match call_frame.function.code[ip] {
+                OpCode::Return { .. } => panic!("not implemented"),
+                OpCode::ReturnValue { index } => self.opcode_return_value(index),
+                OpCode::Jump { target } => self.opcode_jump(target),
+                OpCode::JumpIfFalse { condition, target } => self.opcode_int_jump_if_false(condition, target),
+                OpCode::IntAdd { left_operand, right_operand, result } => self.opcode_int_add(left_operand, right_operand, result),
+                OpCode::IntSubtract { left_operand, right_operand, result } => self.opcode_int_subtract(left_operand, right_operand, result),
+                OpCode::IntEqual { left_operand, right_operand, result } => self.opcode_int_add(left_operand, right_operand, result),
+                OpCode::IntLess { left_operand, right_operand, result } => self.opcode_int_less(left_operand, right_operand, result),
+                OpCode::IntLessOrEqual { .. } => panic!("not implemented"),
+                OpCode::IntGreater { left_operand, right_operand, result } => self.opcode_int_greater(left_operand, right_operand, result),
+                OpCode::IntGreaterOrEqual { .. } => panic!("not implemented"),
+                OpCode::IntConstantLoad { index, target } => self.opcode_int_const_load(index, target),
+                OpCode::True { index } => self.opcode_true(index),
+                OpCode::False { index } => self.opcode_false(index),
+                OpCode::IntMove { from, to } => self.opcode_int_move(from, to),
+                OpCode::GlobalFuncLoad { index, result } => self.opcode_global_func_load(index, result),
+                OpCode::Call { func_index, arguments, result } => self.opcode_call(func_index, arguments, result),
+            }
         }
     }
 
@@ -110,20 +129,13 @@ impl<'a> VM<'a> {
         result_index: usize,
     ) {
         let mut locals = Registers::new(function);
-
         let current_call_frame = self.call_frame();
 
         current_call_frame
             .locals
             .copy_arguments_to(&mut locals, arguments);
 
-        let call_frame = CallFrame {
-            locals: locals,
-            function: function,
-            ip: 0,
-            return_to_index: result_index,
-        };
-
+        let call_frame = CallFrame::new(function, locals, result_index);
         self.call_stack.push(call_frame);
     }
 
@@ -147,11 +159,100 @@ impl<'a> VM<'a> {
     fn initialize_constant(&mut self, index: usize) {
         // TODO
     }
+
+
+    fn opcode_return_value(&mut self, index: usize) {
+        self.pop_call_frame(index);
+    }
+
+    fn opcode_jump(&mut self, target: usize) {
+        self.call_frame().ip = target;
+    }
+
+    fn opcode_int_jump_if_false(&mut self, condition: usize, target: usize) {
+        let call_frame = self.call_frame();
+        let bools = &call_frame.locals.bools;
+
+        let condition = &bools[condition];
+        if !condition.value {
+            call_frame.ip = target;
+        }
+    }
+
+    fn opcode_int_add(&mut self, left_operand: usize, right_operand: usize, result: usize) {
+        let int_reg = &mut self.call_frame().locals.ints;
+        let left_number = &int_reg[left_operand];
+        let right_number = &int_reg[right_operand];
+        int_reg[result] = left_number.add(right_number);
+    }
+
+    fn opcode_int_subtract(&mut self, left_operand: usize, right_operand: usize, result: usize) {
+        let int_reg = &mut self.call_frame().locals.ints;
+        let left_number = &int_reg[left_operand];
+        let right_number = &int_reg[right_operand];
+        int_reg[result] = left_number.subtract(right_number);
+    }
+
+    fn opcode_int_equal(&mut self, left_operand: usize, right_operand: usize, result: usize) {
+        let int_reg = &mut self.call_frame().locals.ints;
+        let left_number = &int_reg[left_operand];
+        let right_number = &int_reg[right_operand];
+        int_reg[result] = left_number.add(right_number);
+    }
+
+    fn opcode_int_less(&mut self, left_operand: usize, right_operand: usize, result: usize) {
+        let call_frame = self.call_frame();
+        let int_reg = &mut call_frame.locals.ints;
+        let left_number = &int_reg[left_operand];
+        let right_number = &int_reg[right_operand];
+
+        call_frame.locals.bools[result] = left_number.less(right_number);
+    }
+
+    fn opcode_int_greater(&mut self, left_operand: usize, right_operand: usize, result: usize) {
+        let call_frame = self.call_frame();
+        let int_reg = &mut call_frame.locals.ints;
+        let left_number = &int_reg[left_operand];
+        let right_number = &int_reg[right_operand];
+
+        call_frame.locals.bools[result] = left_number.greater(right_number);
+    }
+
+    fn opcode_int_const_load(&mut self, index: usize, target: usize) {
+        let constant = self.constants[index];
+        let int_reg = &mut self.call_frame().locals.ints;
+        int_reg[target] = constant;
+    }
+
+    fn opcode_true(&mut self, index: usize) {
+        self.call_frame().locals.bools[index] = TRUE_VALUE;
+    }
+
+
+    fn opcode_false(&mut self, index: usize) {
+        self.call_frame().locals.bools[index] = FALSE_VALUE;
+    }
+
+    fn opcode_int_move(&mut self, from: usize, to: usize) {
+        let int_reg = &mut self.call_frame().locals.ints;
+        int_reg[to] = int_reg[from];
+    }
+
+    fn opcode_global_func_load(&mut self, index: usize, result: usize) {
+        let value = self.globals[index];
+        self.call_frame().locals.funcs[result] = Some(value);
+    }
+
+    fn opcode_call(&mut self, func_index: usize, arguments: &[Argument], result: usize) {
+        let value = self.call_frame().locals.funcs[func_index].as_ref();
+        let func = value.unwrap().function;
+        self.push_call_frame(func, arguments, result);
+    }
 }
 
 impl<'a> Registers<'a> {
     fn copy_arguments_to(&self, target_registers: &mut Registers<'a>, arguments: &[Argument]) {
-        let mut reg_counts = registers::RegisterCounts {
+        let mut reg_counts = RegisterCounts {
             ints: 0,
             bools: 0,
             funcs: 0,

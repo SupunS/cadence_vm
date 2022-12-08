@@ -18,8 +18,7 @@
 
 use runtime::bbq::Function;
 use runtime::opcodes::{
-    Argument, Call, GlobalFuncLoad, IntAdd, IntConstantLoad, IntLess, IntMove, IntSubtract, Jump,
-    JumpIfFalse, ReturnValue,
+    Argument, OpCode,
 };
 use runtime::registers;
 use runtime::values::{FunctionValue, IntValue};
@@ -35,72 +34,72 @@ fn test_recursive_fib() {
         },
         code: vec![
             // if n < 2
-            Box::new(IntConstantLoad {
+            OpCode::IntConstantLoad {
                 index: 0,
                 target: 1,
-            }),
-            Box::new(IntLess {
+            },
+            OpCode::IntLess {
                 left_operand: 0,
                 right_operand: 1,
                 result: 0,
-            }),
-            Box::new(JumpIfFalse {
+            },
+            OpCode::JumpIfFalse {
                 condition: 0,
                 target: 4,
-            }),
+            },
             // then return n
-            Box::new(ReturnValue { index: 0 }),
+            OpCode::ReturnValue { index: 0 },
             // fib(n - 1)
-            Box::new(IntConstantLoad {
+            OpCode::IntConstantLoad {
                 index: 1,
                 target: 2,
-            }),
-            Box::new(IntSubtract {
+            },
+            OpCode::IntSubtract {
                 left_operand: 0,
                 right_operand: 2,
                 result: 3,
-            }),
-            Box::new(GlobalFuncLoad {
+            },
+            OpCode::GlobalFuncLoad {
                 index: 0,
                 result: 0,
-            }),
-            Box::new(Call {
+            },
+            OpCode::Call {
                 func_index: 0,
                 arguments: &[Argument {
                     typ: registers::RegisterType::Int,
                     index: 3,
                 }],
                 result: 4,
-            }),
+            },
             // fib(n - 2)
-            Box::new(IntConstantLoad {
+            OpCode::IntConstantLoad {
                 index: 2,
                 target: 5,
-            }),
-            Box::new(IntSubtract {
+            },
+            OpCode::IntSubtract {
                 left_operand: 0,
                 right_operand: 5,
                 result: 6,
-            }),
-            Box::new(GlobalFuncLoad {
+            },
+            OpCode::GlobalFuncLoad {
                 index: 0,
                 result: 1,
-            }),
-            Box::new(Call {
+            },
+            OpCode::Call {
                 func_index: 1,
                 arguments: &[Argument {
                     typ: registers::RegisterType::Int,
                     index: 6,
                 }],
                 result: 7,
-            }),
+            },
             // return sum
-            Box::new(IntAdd {
+            OpCode::IntAdd {
                 left_operand: 4,
                 right_operand: 7,
                 result: 8,
-            }),
-            Box::new(ReturnValue { index: 8 }),
+            },
+            OpCode::ReturnValue { index: 8 },
         ],
     };
 
@@ -131,61 +130,61 @@ fn test_imperative_fib() {
         },
         code: vec![
             // var fib1 = 1
-            Box::new(IntConstantLoad {
+            OpCode::IntConstantLoad {
                 index: 0,
                 target: 1,
-            }),
-            Box::new(IntMove { from: 1, to: 2 }),
+            },
+            OpCode::IntMove { from: 1, to: 2 },
             // var fib1 = 1
-            Box::new(IntConstantLoad {
+            OpCode::IntConstantLoad {
                 index: 1,
                 target: 3,
-            }),
-            Box::new(IntMove { from: 3, to: 4 }),
+            },
+            OpCode::IntMove { from: 3, to: 4 },
             // var fibonacci = fib1
-            Box::new(IntMove { from: 2, to: 5 }),
+            OpCode::IntMove { from: 2, to: 5 },
             // var i = 2
-            Box::new(IntConstantLoad {
+            OpCode::IntConstantLoad {
                 index: 2,
                 target: 6,
-            }),
-            Box::new(IntMove { from: 6, to: 7 }),
+            },
+            OpCode::IntMove { from: 6, to: 7 },
             // while i < n
-            Box::new(IntLess {
+            OpCode::IntLess {
                 left_operand: 7,
                 right_operand: 0,
                 result: 0,
-            }),
-            Box::new(JumpIfFalse {
+            },
+            OpCode::JumpIfFalse {
                 condition: 0,
                 target: 17,
-            }),
+            },
             // fibonacci = fib1 + fib2
-            Box::new(IntAdd {
+            OpCode::IntAdd {
                 left_operand: 2,
                 right_operand: 4,
                 result: 8,
-            }),
-            Box::new(IntMove { from: 8, to: 5 }),
+            },
+            OpCode::IntMove { from: 8, to: 5 },
             // fib1 = fib2
-            Box::new(IntMove { from: 4, to: 2 }),
+            OpCode::IntMove { from: 4, to: 2 },
             // fib2 = fibonacci
-            Box::new(IntMove { from: 5, to: 4 }),
+            OpCode::IntMove { from: 5, to: 4 },
             // i = i + 1
-            Box::new(IntConstantLoad {
+            OpCode::IntConstantLoad {
                 index: 3,
                 target: 9,
-            }),
-            Box::new(IntAdd {
+            },
+            OpCode::IntAdd {
                 left_operand: 7,
                 right_operand: 9,
                 result: 10,
-            }),
-            Box::new(IntMove { from: 10, to: 7 }),
+            },
+            OpCode::IntMove { from: 10, to: 7 },
             // continue loop
-            Box::new(Jump { target: 7 }),
+            OpCode::Jump { target: 7 },
             // return fibonacci
-            Box::new(ReturnValue { index: 5 }),
+            OpCode::ReturnValue { index: 5 },
         ],
     };
 

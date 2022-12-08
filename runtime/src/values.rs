@@ -18,8 +18,6 @@
 
 use crate::bbq;
 
-pub(crate) trait Value {}
-
 /*
 *  IntValue
 */
@@ -28,8 +26,6 @@ pub struct IntValue {
 }
 
 pub(crate) const INT_ZERO_VALUE: IntValue = IntValue { value: 0 };
-
-impl Value for IntValue {}
 
 impl Clone for IntValue {
     fn clone(&self) -> Self {
@@ -75,8 +71,6 @@ pub struct BoolValue {
     pub value: bool,
 }
 
-impl Value for BoolValue {}
-
 impl Clone for BoolValue {
     fn clone(&self) -> Self {
         BoolValue { value: self.value }
@@ -93,10 +87,8 @@ pub(crate) const FALSE_VALUE: BoolValue = BoolValue { value: false };
 *  FunctionValue
 */
 pub struct FunctionValue<'a> {
-    pub function: &'a bbq::Function,
+    pub function: &'a bbq::Function<'a>,
 }
-
-impl<'a> Value for FunctionValue<'a> {}
 
 impl<'a> Clone for FunctionValue<'a> {
     fn clone(&self) -> Self {

@@ -24,14 +24,10 @@ build-static:
 	@cp runtime/target/release/libruntime.a ./runtime
 	go build call_rust.go
 
-.PHONY: run-static
-run-static: build-static
-	@./main_static
-
 # Run the Rust lib tests natively via cargo
 .PHONY: test-rust-lib
 test-rust-lib:
-	@cd lib/runtime && cargo test -- --nocapture
+	@cd runtime && cargo test -- --nocapture
 
 .PHONY: clean
 clean:

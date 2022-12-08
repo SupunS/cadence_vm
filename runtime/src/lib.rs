@@ -17,7 +17,7 @@
  */
 
 use crate::bbq::Function;
-use crate::opcodes::{Argument, Call, GlobalFuncLoad, IntAdd, IntConstantLoad, IntLess, IntSubtract, JumpIfFalse, ReturnValue};
+use crate::opcodes::{Argument, OpCode};
 use crate::registers::{RegisterCounts, RegisterType};
 use crate::values::{FunctionValue, IntValue};
 use crate::vm::VM;
@@ -55,72 +55,72 @@ fn recursive_fib(n: u32) -> u32 {
         },
         code: vec![
             // if n < 2
-            Box::new(IntConstantLoad {
+            OpCode::IntConstantLoad {
                 index: 0,
                 target: 1,
-            }),
-            Box::new(IntLess {
+            },
+            OpCode::IntLess {
                 left_operand: 0,
                 right_operand: 1,
                 result: 0,
-            }),
-            Box::new(JumpIfFalse {
+            },
+            OpCode::JumpIfFalse {
                 condition: 0,
                 target: 4,
-            }),
+            },
             // then return n
-            Box::new(ReturnValue { index: 0 }),
+            OpCode::ReturnValue { index: 0 },
             // fib(n - 1)
-            Box::new(IntConstantLoad {
+            OpCode::IntConstantLoad {
                 index: 1,
                 target: 2,
-            }),
-            Box::new(IntSubtract {
+            },
+            OpCode::IntSubtract {
                 left_operand: 0,
                 right_operand: 2,
                 result: 3,
-            }),
-            Box::new(GlobalFuncLoad {
+            },
+            OpCode::GlobalFuncLoad {
                 index: 0,
                 result: 0,
-            }),
-            Box::new(Call {
+            },
+            OpCode::Call {
                 func_index: 0,
                 arguments: &[Argument {
-                    typ: RegisterType::Int,
+                    typ: registers::RegisterType::Int,
                     index: 3,
                 }],
                 result: 4,
-            }),
+            },
             // fib(n - 2)
-            Box::new(IntConstantLoad {
+            OpCode::IntConstantLoad {
                 index: 2,
                 target: 5,
-            }),
-            Box::new(IntSubtract {
+            },
+            OpCode::IntSubtract {
                 left_operand: 0,
                 right_operand: 5,
                 result: 6,
-            }),
-            Box::new(GlobalFuncLoad {
+            },
+            OpCode::GlobalFuncLoad {
                 index: 0,
                 result: 1,
-            }),
-            Box::new(Call {
+            },
+            OpCode::Call {
                 func_index: 1,
                 arguments: &[Argument {
-                    typ: RegisterType::Int,
+                    typ: registers::RegisterType::Int,
                     index: 6,
                 }],
                 result: 7,
-            }),
+            },
             // return sum
-            Box::new(IntAdd {
+            OpCode::IntAdd {
                 left_operand: 4,
                 right_operand: 7,
                 result: 8,
-            }),
-            Box::new(ReturnValue { index: 8 }),
+            },
+            OpCode::ReturnValue { index: 8 },
         ],
     };
 
