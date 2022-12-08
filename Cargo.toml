@@ -13,3 +13,4 @@ name = "benchmark_vm"
 harness = false
 
 [dependencies]
+derive_more = "0.99"
