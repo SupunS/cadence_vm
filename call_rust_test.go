@@ -30,8 +30,8 @@ func TestRustAdd(t *testing.T) {
 }
 
 func TestRustFib(t *testing.T) {
-	result := Fib(7)
-	assert.Equal(t, 13, result)
+	result := Fib(14)
+	assert.Equal(t, 377, result)
 }
 
 func BenchmarkGoAdd(b *testing.B) {
@@ -61,7 +61,7 @@ func BenchmarkGoFib(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		fib(7)
+		fib(14)
 	}
 }
 
@@ -78,7 +78,7 @@ func BenchmarkRustFib(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		Fib(7)
+		Fib(14)
 	}
 }
 
@@ -87,6 +87,6 @@ func BenchmarkCadenceFib(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		CadenceFib(7)
+		CadenceFib(14)
 	}
 }

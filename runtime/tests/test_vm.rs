@@ -116,9 +116,9 @@ fn test_recursive_fib() {
         return_value: IntValue { value: 0 },
     };
 
-    let result = vm.invoke(&func, IntValue { value: 7 });
+    let result = vm.invoke(&func, IntValue { value: 14 });
 
-    assert_eq!(result.value, 13);
+    assert_eq!(result.value, 377);
 }
 
 #[test]
@@ -202,7 +202,7 @@ fn test_imperative_fib() {
         return_value: IntValue { value: 0 },
     };
 
-    let result = vm.invoke(&func, IntValue { value: 7 });
+    let result = vm.invoke(&func, IntValue { value: 14 });
 
-    assert_eq!(result.value, 13);
+    assert_eq!(result.value, 377);
 }

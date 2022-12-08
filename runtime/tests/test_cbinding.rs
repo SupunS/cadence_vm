@@ -26,12 +26,12 @@ fn add_function() {
 
 #[test]
 fn fib_function() {
-    let result = fib(7 as i32);
-    assert_eq!(result, 13 as i32)
+    let result = fib(14 as i32);
+    assert_eq!(result, 377 as i32)
 }
 
 #[test]
 fn cdc_fib_function() {
-    let result = cdcfib(7 as i32);
-    assert_eq!(result, 13 as i32)
+    let result = cdcfib(14 as i32);
+    assert_eq!(result, 377 as i32)
 }
