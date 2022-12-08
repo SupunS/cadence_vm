@@ -19,21 +19,58 @@
 use cadence_vm::runtime::bbq::Function;
 use cadence_vm::runtime::opcodes::{
     Argument, Call, GlobalFuncLoad, IntAdd, IntConstantLoad, IntLess, IntMove, IntSubtract, Jump,
-    JumpIfFalse, ReturnValue,
+    JumpIfFalse, ReturnValue, OpCode,
 };
 use cadence_vm::runtime::registers;
 use cadence_vm::runtime::values::{FunctionValue, IntValue};
 use cadence_vm::runtime::vm::VM;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
+macro_rules! cadence_asm {
+    ($($t:tt)*) => {asm_impl!([], $($t)*)}
+}
+macro_rules! asm_impl {
+    // IntConstantLoad: lda src, expr
+    ([$($acc:tt)*], lda $src:expr, $dst:expr; $($t:tt)*) => {asm_impl!([$($acc)*, (IntConstantLoad{index: $src, target: $dst})], $($t)*)};
+    // IntMove:  mov src, expr
+    ([$($acc:tt)*], mov $src:expr, $dst:expr; $($t:tt)*) => {asm_impl!([$($acc)*, (IntMove{from: $src, to: $dst})], $($t)*)};
+    // IntLess: lt lhs, rhs, dst
+    ([$($acc:tt)*], lt $lhs:expr, $rhs:expr, $dst:expr; $($t:tt)*) => {asm_impl!([$($acc)*, (IntLess{left_operand: $lhs, right_operand: $rhs, result: $dst})], $($t)*)};
+
+    // IntAdd: add lhs, rhs, dst
+    ([$($acc:tt)*], add $lhs:expr, $rhs:expr, $dst:expr; $($t:tt)*) => {asm_impl!([$($acc)*, (IntAdd{left_operand: $lhs, right_operand: $rhs, result: $dst})], $($t)*)};
+    // IntSubtract: sub lhs, rhs, dst
+    ([$($acc:tt)*], sub $lhs:expr, $rhs:expr, $dst:expr; $($t:tt)*) => {asm_impl!([$($acc)*, (IntSubtract{left_operand: $lhs, right_operand: $rhs, result: $dst})], $($t)*)};
+
+    // Call: call func_index, dst, [arguments,]
+    ([$($acc:tt)*], call $func_idx:expr, $result:expr, [$($arg_idx:expr),* $(,)*]; $($t:tt)*) => {
+        asm_impl!([$($acc)*, (
+            Call {
+                func_index: $func_idx,
+                result: $result,
+                arguments: &[$(Argument{typ: registers::RegisterType::Int, index: $arg_idx},)*],
+            }
+        )], $($t)*)};
+    
+    // GlobalFuncLoad: gfl idx, result
+    ([$($acc:tt)*], gfl $idx:expr, $result:expr; $($t:tt)*) => {asm_impl!([$($acc)*, (GlobalFuncLoad{index: $idx, result: $result})], $($t)*)};
+    // JumpIfFalse: jez cond, target
+    ([$($acc:tt)*], jez $cond:expr, $targ:expr; $($t:tt)*) => {asm_impl!([$($acc)*, (JumpIfFalse{condition: $cond, target: $targ})], $($t)*)};
+    // Jump: jmp dest
+    ([$($acc:tt)*], jmp $targ:expr; $($t:tt)*) => {asm_impl!([$($acc)*, (Jump{target: $targ})], $($t)*)};
+
+    // ReturnValue: ret val
+    ([$($acc:tt)*], ret $val:expr; $($t:tt)*) => {asm_impl!([$($acc)*, (ReturnValue{index: $val})], $($t)*)};
+    ([$(,)* $($instr:expr),* $(,)*],) => {
+        {
+            let v: Vec<Box<dyn cadence_vm::runtime::opcodes::OpCode>> = vec![$(Box::new($instr),)*];
+            v
+        }
+    };
+}
+
 fn bench_cadence_recursive_fib(c: &mut Criterion) {
-    let func = Function {
-        local_count: registers::RegisterCounts {
-            ints: 9,
-            bools: 1,
-            funcs: 2,
-        },
-        code: vec![
+    let old_code: Vec<Box<dyn OpCode>> = vec![
             // if n < 2
             Box::new(IntConstantLoad {
                 index: 0,
@@ -101,7 +138,29 @@ fn bench_cadence_recursive_fib(c: &mut Criterion) {
                 result: 8,
             }),
             Box::new(ReturnValue { index: 8 }),
-        ],
+        ];
+    let func = Function {
+        local_count: registers::RegisterCounts {
+            ints: 9,
+            bools: 1,
+            funcs: 2,
+        },
+        code: cadence_asm! {
+            lda 0, 1;
+            lt 0, 1, 0;
+            jez 0, 4;
+            ret 0;
+            lda 1, 2;
+            sub 0, 2, 3;
+            gfl 0, 0;
+            call 0, 4, [3];
+            lda 2, 5;
+            sub 0, 5, 6;
+            gfl 0, 1;
+            call 1, 7, [6];
+            add 4, 7, 8;
+            ret 8;
+        }
     };
 
     let mut vm = VM {
