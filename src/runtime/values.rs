@@ -17,12 +17,15 @@
  */
 
 use crate::runtime::bbq;
+use derive_more::{Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign, From, Into};
 
-pub(crate) trait Value {}
+pub(crate) trait Value { }
 
 /*
 *  IntValue
 */
+#[derive(Add, AddAssign, Sub, SubAssign, Mul, MulAssign, Div, DivAssign, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+#[mul(forward)]
 pub struct IntValue {
     pub value: isize,
 }
@@ -31,59 +34,16 @@ pub(crate) const INT_ZERO_VALUE: IntValue = IntValue { value: 0 };
 
 impl Value for IntValue {}
 
-impl Clone for IntValue {
-    fn clone(&self) -> Self {
-        IntValue { value: self.value }
-    }
-}
-
-impl Copy for IntValue {}
-
-impl IntValue {
-    pub(crate) fn add(&self, other: &IntValue) -> IntValue {
-        return IntValue {
-            value: self.value + other.value,
-        };
-    }
-
-    pub(crate) fn subtract(&self, other: &IntValue) -> IntValue {
-        return IntValue {
-            value: self.value - other.value,
-        };
-    }
-
-    pub(crate) fn less(&self, other: &IntValue) -> BoolValue {
-        if self.value < other.value {
-            return TRUE_VALUE;
-        }
-        return FALSE_VALUE;
-    }
-
-    pub(crate) fn greater(&self, other: &IntValue) -> BoolValue {
-        if self.value < other.value {
-            return FALSE_VALUE;
-        }
-        return TRUE_VALUE;
-    }
-}
-
 /*
 *  BoolValue
 */
 
+#[derive(Clone, Copy, From, Into)]
 pub struct BoolValue {
     pub value: bool,
 }
 
 impl Value for BoolValue {}
-
-impl Clone for BoolValue {
-    fn clone(&self) -> Self {
-        BoolValue { value: self.value }
-    }
-}
-
-impl Copy for BoolValue {}
 
 pub(crate) const TRUE_VALUE: BoolValue = BoolValue { value: true };
 

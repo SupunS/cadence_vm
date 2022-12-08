@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RegisterCounts {
     pub ints: usize,
     pub bools: usize,
@@ -44,6 +45,7 @@ impl RegisterCounts {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RegisterType {
     Int,
     Bool,
