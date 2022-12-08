@@ -24,9 +24,7 @@ pub struct Argument {
     pub typ: registers::RegisterType,
     pub index: usize,
 }
-macro_rules! binop {
-    ($name:ident) => {$name{left_operand: usize, right_operand: usize, result: usize}}
-}
+
 #[derive(Clone, PartialEq, Eq)]
 pub struct BinOpArgs{left_operand: usize, right_operand: usize, result: usize}
 pub enum OpCode {
