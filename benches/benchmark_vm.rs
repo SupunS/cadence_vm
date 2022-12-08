@@ -109,9 +109,9 @@ fn bench_cadence_recursive_fib(c: &mut Criterion) {
         return_value: IntValue { value: 0 },
     };
 
-    let n = IntValue { value: 7 };
+    let n = IntValue { value: 14 };
 
-    c.bench_function("cadence recursive fib 7", |b| {
+    c.bench_function("cadence recursive fib 14", |b| {
         b.iter(|| vm.invoke(&func, black_box(n)))
     });
 }
@@ -185,15 +185,15 @@ fn bench_cadence_imperative_fib(c: &mut Criterion) {
         return_value: IntValue { value: 0 },
     };
 
-    let n = IntValue { value: 7 };
+    let n = IntValue { value: 14 };
 
-    c.bench_function("cadence imperative fib 7", |b| {
+    c.bench_function("cadence imperative fib 14", |b| {
         b.iter(|| vm.invoke(&func, black_box(n)))
     });
 }
 
 fn bench_rust_fib(c: &mut Criterion) {
-    c.bench_function("rust fib 7", |b| b.iter(|| fibonacci(black_box(7))));
+    c.bench_function("rust fib 14", |b| b.iter(|| fibonacci(black_box(14))));
 }
 
 fn fibonacci(n: u32) -> u32 {
